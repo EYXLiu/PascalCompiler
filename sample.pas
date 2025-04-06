@@ -6,5 +6,5 @@ begin
 end;
 
 begin
-  WriteLn('The result of 1 + 2 is: ', AddOneAndTwo);
+  WriteLn("The result of 1 + 2 is: ", AddOneAndTwo);
 end.

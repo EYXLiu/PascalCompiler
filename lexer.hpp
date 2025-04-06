@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <cctype>
+#include <algorithm>
 
 class Lexer {
 private:
@@ -22,6 +23,7 @@ public:
     std::unique_ptr<Token> identifier();
     std::unique_ptr<Token> special();
     std::unique_ptr<Token> stringLiteral();
+    std::unique_ptr<Token> charLiteral();
 
     std::unique_ptr<Token> nextToken();
 };

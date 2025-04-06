@@ -11,14 +11,14 @@ char Lexer::next() {
 }
 
 void Lexer::skipWhitespace() {
-    while (std::isspace(peek())) {
+    while (isspace(peek())) {
         next();
     }
 }
 
 std::unique_ptr<Token> Lexer::number() {
     std::string value;
-    while (std::isdigit(peek()) || peek() == '.') {
+    while (isdigit(peek()) || peek() == '.') {
         value += next();
     }
     return std::make_unique<Token>(TokenType::tok_number, value);
@@ -26,9 +26,13 @@ std::unique_ptr<Token> Lexer::number() {
 
 std::unique_ptr<Token> Lexer::identifier() {
     std::string value;
-    while (std::isalnum(peek() || peek()== '_')) {
+    while (isalnum(peek()) || peek()== '_') {
         value += next();
     }
+
+    std::transform(value.begin(), value.end(), value.begin(),
+        [](unsigned char c){ return tolower(c); }
+    );
 
     if (value == "program") return std::make_unique<Token>(TokenType::tok_program, value);
     if (value == "var") return std::make_unique<Token>(TokenType::tok_var, value);
@@ -52,18 +56,20 @@ std::unique_ptr<Token> Lexer::identifier() {
     if (value == "type") return std::make_unique<Token>(TokenType::tok_type, value);
     if (value == "array") return std::make_unique<Token>(TokenType::tok_array, value);
     if (value == "record") return std::make_unique<Token>(TokenType::tok_record, value);
-    if (value == "integer") return std::make_unique<Token>(TokenType::tok_integer, value);
-    if (value == "real") return std::make_unique<Token>(TokenType::tok_real, value);
-    if (value == "char") return std::make_unique<Token>(TokenType::tok_char, value);
-    if (value == "string") return std::make_unique<Token>(TokenType::tok_string, value);
-    if (value == "bool") return std::make_unique<Token>(TokenType::tok_boolean, value);
-    if (value == "write") return std::make_unique<Token>(TokenType::tok_write, value);
-    if (value == "read") return std::make_unique<Token>(TokenType::tok_read, value);
+    if (value == "set") return std::make_unique<Token>(TokenType::tok_set, value);
+    if (value == "writeln") return std::make_unique<Token>(TokenType::tok_write, value);
+    if (value == "readln") return std::make_unique<Token>(TokenType::tok_read, value);
     if (value == "and") return std::make_unique<Token>(TokenType::tok_and, value);
     if (value == "or") return std::make_unique<Token>(TokenType::tok_or, value);
     if (value == "not") return std::make_unique<Token>(TokenType::tok_not, value);
     if (value == "mod") return std::make_unique<Token>(TokenType::tok_mod, value);
     if (value == "div") return std::make_unique<Token>(TokenType::tok_div, value);
+    if (value == "integeter") return std::make_unique<Token>(TokenType::tok_integer, value);
+    if (value == "real") return std::make_unique<Token>(TokenType::tok_real, value);
+    if (value == "char") return std::make_unique<Token>(TokenType::tok_char, value);
+    if (value == "boolean") return std::make_unique<Token>(TokenType::tok_boolean, value);
+    if (value == "string") return std::make_unique<Token>(TokenType::tok_string, value);
+    if (value == "true" || value == "false") return std::make_unique<Token>(TokenType::tok_boolean_literal, value);
     
 
     return std::make_unique<Token>(TokenType::tok_identifier, value);
@@ -92,10 +98,24 @@ std::unique_ptr<Token> Lexer::special() {
         case '>':
             next();
             if (peek() == '=') {
-                next;
+                next();
                 return std::make_unique<Token>(TokenType::tok_greater_equal, ">=");
             }
             return std::make_unique<Token>(TokenType::tok_greater_than, ">");
+        case '=':
+            next();
+            if (peek() == '=') {
+                next();
+                return std::make_unique<Token>(TokenType::tok_equals, "==");
+            }
+            return std::make_unique<Token>(TokenType::tok_assign, "=");
+        case '!':
+            next();
+            if (peek() != '=') {
+                return std::make_unique<Token>(TokenType::tok_error, "");
+            }
+            next();
+            return std::make_unique<Token>(TokenType::tok_not_equals, "!=");
         case '+':
             next();
             return std::make_unique<Token>(TokenType::tok_plus, ";");
@@ -113,6 +133,10 @@ std::unique_ptr<Token> Lexer::special() {
             return std::make_unique<Token>(TokenType::tok_semicolon, ";");
         case '.':
             next();
+            if (peek() == '.') {
+                next();
+                return std::make_unique<Token>(TokenType::tok_range, "..");
+            }
             return std::make_unique<Token>(TokenType::tok_dot, ".");
         case ',':
             next();
@@ -128,7 +152,10 @@ std::unique_ptr<Token> Lexer::special() {
             return std::make_unique<Token>(TokenType::tok_open_bracket, "[");
         case ']':
             next();
-            return std::make_unique<Token>(TokenType::tok_close_bracket, ";");
+            return std::make_unique<Token>(TokenType::tok_close_bracket, "]");
+        case '^':
+            next();
+            return std::make_unique<Token>(TokenType::tok_pointer, "^");
     }
 
     return std::make_unique<Token>(TokenType::tok_identifier, std::string(1, next()));
@@ -149,6 +176,17 @@ std::unique_ptr<Token> Lexer::stringLiteral() {
     return std::make_unique<Token>(TokenType::tok_error, value);
 }
 
+std::unique_ptr<Token> Lexer::charLiteral() {
+    next();
+    std::string value;
+    value += next();
+    if (peek() == '\'') {
+        next();
+        return std::make_unique<Token>(TokenType::tok_char_literal, value);
+    }
+    return std::make_unique<Token>(TokenType::tok_error, value);
+}
+
 std::unique_ptr<Token> Lexer::nextToken() {
     skipWhitespace();
 
@@ -158,16 +196,20 @@ std::unique_ptr<Token> Lexer::nextToken() {
         return std::make_unique<Token>(TokenType::tok_eof, "");
     }
 
-    if (std::isdigit(current)) {
+    if (isdigit(current)) {
         return number();
     }
 
-    if (std::isalpha(current) || current == '_') {
+    if (isalpha(current) || current == '_') {
         return identifier();
     }
 
     if (current == '"') {
         return stringLiteral();
+    }
+
+    if (current == '\'') {
+        return charLiteral();
     }
 
     return special();
