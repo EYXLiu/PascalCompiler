@@ -62,20 +62,20 @@ struct VarExpr : public Expr {
 };
 
 struct UnaryExpr : public Expr {
-    char op;
+    std::string op;
     std::unique_ptr<Expr> rhs;
 
-    UnaryExpr(char op, std::unique_ptr<Expr> rhs) : op(op), rhs(std::move(rhs)) {};
+    UnaryExpr(std::string op, std::unique_ptr<Expr> rhs) : op(op), rhs(std::move(rhs)) {};
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
 };
 
 struct BinaryExpr : public Expr {
-    char op;
+    std::string op;
     std::unique_ptr<Expr> lhs, rhs;
 
-    BinaryExpr(char op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs) : op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {};
+    BinaryExpr(std::string op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs) : op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {};
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };

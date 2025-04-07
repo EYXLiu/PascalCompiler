@@ -75,15 +75,16 @@ std::vector<std::unique_ptr<Decl>> Parser::parseConstDecl() {
     std::vector<std::unique_ptr<Decl>> decls;
 
     while (match(TokenType::tok_identifier)) {
-        std::string name = curr->value;
-        std::unique_ptr<VarExpr> n = std::make_unique<VarExpr>(name);
+        std::string n = curr->value;
         next();
         expect(TokenType::tok_assign);
         std::unique_ptr<Expr> v;
         if (curr->type == TokenType::tok_number) {
             v = std::make_unique<NumberExpr>(std::stod(curr->value));
         } else if (curr->type == TokenType::tok_boolean_literal) {
-            v = std::make_unique<BoolExpr>(curr->value == "True");
+            v = std::make_unique<BoolExpr>(curr->value == "true");
+        } else if (curr->type == TokenType::tok_char) {
+            v = std::make_unique<CharExpr>((curr->value)[0]);
         } else {
             v = std::make_unique<StringExpr>(curr->value);
         }
@@ -99,8 +100,7 @@ std::vector<std::unique_ptr<Decl>> Parser::parseTypeDecl() {
     std::vector<std::unique_ptr<Decl>> decls;
 
     while (match(TokenType::tok_identifier)) {
-        std::string name = curr->value;
-        std::unique_ptr<VarExpr> n = std::make_unique<VarExpr>(name);
+        std::string n = curr->value;
         next();
 
         if (match(TokenType::tok_assign)) {
@@ -122,9 +122,9 @@ std::vector<std::unique_ptr<Decl>> Parser::parseTypeDecl() {
                 expect(TokenType::tok_close_bracket);
                 expect(TokenType::tok_of);
                 if (match(TokenType::tok_identifier)) {
-                    decls.push_back(std::make_unique<ArrayType>(curr->type, min, max, curr->value));
+                    decls.push_back(std::make_unique<ArrayType>(n, curr->type, min, max, curr->value));
                 } else {
-                    decls.push_back(std::make_unique<ArrayType>(curr->type, min, max));
+                    decls.push_back(std::make_unique<ArrayType>(n, curr->type, min, max));
                 }
                 next();
                 expect(TokenType::tok_semicolon);
@@ -173,10 +173,12 @@ std::vector<std::unique_ptr<Decl>> Parser::parseVarDecl() {
     std::vector<std::unique_ptr<Decl>> decls;
 
     while (match(TokenType::tok_identifier)) {
-        std::vector<std::unique_ptr<VarExpr>> n;
+        std::vector<std::string> n;
         while (match(TokenType::tok_identifier)) {
-            n.push_back(std::make_unique<VarExpr>(curr->value));
-            expect(TokenType::tok_comma);
+            n.push_back(curr->value);
+            if (match(TokenType::tok_comma)) {
+                next();
+            }
         }
         expect(TokenType::tok_colon);
         if (match(TokenType::tok_array)) {

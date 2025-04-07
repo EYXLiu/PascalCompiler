@@ -38,9 +38,9 @@ struct AssignStmt : public Stmt {
 };
 
 struct CompoundStmt : public Stmt {
-    std::vector<std::unique_ptr<Expr>> statements;
+    std::vector<std::unique_ptr<Stmt>> statements;
 
-    CompoundStmt(std::vector<std::unique_ptr<Expr>> statements) : statements(std::move(statements)) {};
+    CompoundStmt(std::vector<std::unique_ptr<Stmt>> statements) : statements(std::move(statements)) {};
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -78,13 +78,14 @@ struct RepeatStmt : public Stmt {
 };
 
 struct ForStmt : public Stmt {
-    std::unique_ptr<VarExpr> name;
-    std::unique_ptr<Expr> start;
-    std::unique_ptr<Expr> end;
+    std::string name;
+    int start;
+    int end;
+    bool ischar;
     bool isdownto;
     std::unique_ptr<Stmt> body;
 
-    ForStmt(std::unique_ptr<VarExpr> name, std::unique_ptr<Expr> start, std::unique_ptr<Expr> end, bool isdownto, std::unique_ptr<Stmt> body) : name(std::move(name)), start(std::move(start)), end(std::move(end)), isdownto(isdownto), body(std::move(body)) {};
+    ForStmt(const std::string &name, int start, int end, bool ischar, bool isdownto, std::unique_ptr<Stmt> body) : name(name), start(start), end(end), ischar(ischar), isdownto(isdownto), body(std::move(body)) {};
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
