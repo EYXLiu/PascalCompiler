@@ -1,1 +1,6 @@
 .zshrc
+
+*.d
+*.o
+
+cpascal

@@ -8,10 +8,10 @@
 
 #include "llvm.hpp"
 
-static std::unique_ptr<llvm::LLVMContext> TheContext = std::make_unique<llvm::LLVMContext>();
-static std::unique_ptr<llvm::IRBuilder<>> Builder = std::make_unique<llvm::IRBuilder<>>(*TheContext);
-static std::unique_ptr<llvm::Module> TheModule = std::make_unique<llvm::Module>("Module", *TheContext);
-static std::map<std::string, llvm::Value *> NamedValues;
+std::unique_ptr<llvm::LLVMContext> TheContext = std::make_unique<llvm::LLVMContext>();
+std::unique_ptr<llvm::IRBuilder<>> Builder = std::make_unique<llvm::IRBuilder<>>(*TheContext);
+std::unique_ptr<llvm::Module> TheModule = std::make_unique<llvm::Module>("Module", *TheContext);
+std::map<std::string, llvm::Value *> NamedValues;
 
 
 
