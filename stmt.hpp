@@ -30,10 +30,10 @@ struct CallStmt : public Stmt {
 };
 
 struct AssignStmt : public Stmt {
-    std::unique_ptr<VarExpr> name;
+    std::unique_ptr<Expr> name;
     std::unique_ptr<Expr> value;
 
-    AssignStmt(std::unique_ptr<VarExpr> name, std::unique_ptr<Expr> value) : name(std::move(name)), value(std::move(value)) {};
+    AssignStmt(std::unique_ptr<Expr> name, std::unique_ptr<Expr> value) : name(std::move(name)), value(std::move(value)) {};
     AssignStmt(AssignStmt&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);

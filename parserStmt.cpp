@@ -15,7 +15,17 @@ std::unique_ptr<Stmt> Parser::parseExprStmt() {
     if (match(TokenType::tok_identifier)) {
         std::string n = curr->value;
         next();
-        if (match(TokenType::tok_assign)) {
+        if (match(TokenType::tok_open_bracket)) {
+            next();
+            std::unique_ptr<Expr> i = parseNestedExpr();
+            expect(TokenType::tok_close_bracket);
+            return parseAssignStmt(std::make_unique<ArrayExpr>(std::make_unique<VarExpr>(n), std::move(i)));
+        } else if (match(TokenType::tok_dot)) {
+            next();
+            std::string f = curr->value;
+            expect(TokenType::tok_number);
+            return parseAssignStmt(std::make_unique<RecordExpr>(std::make_unique<VarExpr>(n), f));
+        } else if (match(TokenType::tok_assign)) {
             return parseAssignStmt(n);
         } else {
             return parseCallStmt(n);
@@ -55,6 +65,21 @@ std::unique_ptr<Stmt> Parser::parseAssignStmt(const std::string &name) {
     
 }
 
+std::unique_ptr<Stmt> Parser::parseAssignStmt(std::unique_ptr<Expr> name) {
+    expect(TokenType::tok_assign);
+    if (!match(TokenType::tok_identifier)) {
+        std::string unary = curr->value;
+        next();
+        std::unique_ptr<Expr> v = parseNestedExpr();
+        expect(TokenType::tok_semicolon);
+        return std::make_unique<AssignStmt>(std::move(name), std::make_unique<UnaryExpr>(unary, std::move(v)));
+    } else {
+        std::unique_ptr<Expr> v = parseNestedExpr();
+        expect(TokenType::tok_semicolon);
+        return std::make_unique<AssignStmt>(std::move(name), std::move(v));
+    }
+}
+
 std::unique_ptr<Expr> Parser::parseNestedExpr() {
     if (match(TokenType::tok_number)) {
         std::unique_ptr<Expr> LHS = std::make_unique<NumberExpr>(std::stod(curr->value));
@@ -91,8 +116,32 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
     } else if (match(TokenType::tok_identifier)) {
         std::string name = curr->value;
         next();
-        if (match(TokenType::tok_open_bracket)) {
+        if (match(TokenType::tok_open_paren)) {
             std::unique_ptr<Expr> LHS = parseCallExpr(name);
+            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
+                std::string binary = curr->value;
+                next();
+                std::unique_ptr<Expr> RHS = parseNestedExpr();
+                return std::make_unique<BinaryExpr>(curr->value, std::move(LHS), std::move(RHS));
+            }
+            return LHS;
+        } else if (match(TokenType::tok_open_bracket)) {
+            next();
+            std::unique_ptr<Expr> i = parseNestedExpr();
+            expect(TokenType::tok_close_bracket);
+            std::unique_ptr<Expr> LHS = std::make_unique<ArrayExpr>(std::make_unique<VarExpr>(name), std::move(i));
+            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
+                std::string binary = curr->value;
+                next();
+                std::unique_ptr<Expr> RHS = parseNestedExpr();
+                return std::make_unique<BinaryExpr>(curr->value, std::move(LHS), std::move(RHS));
+            }
+            return LHS;
+        } else if (match(TokenType::tok_dot)) {
+            next();
+            std::string f = curr->value;
+            next();
+            std::unique_ptr<Expr> LHS = std::make_unique<RecordExpr>(std::make_unique<VarExpr>(name), f);
             if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
                 std::string binary = curr->value;
                 next();

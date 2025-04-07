@@ -40,6 +40,7 @@ public:
 
     std::unique_ptr<Stmt> parseCallStmt(const std::string &name);
     std::unique_ptr<Stmt> parseAssignStmt(const std::string &name);
+    std::unique_ptr<Stmt> parseAssignStmt(std::unique_ptr<Expr> name);
     std::unique_ptr<Stmt> parseCompoundStmt();
     std::unique_ptr<Stmt> parseIfStmt();
     std::unique_ptr<Stmt> parseWhileStmt(); 
