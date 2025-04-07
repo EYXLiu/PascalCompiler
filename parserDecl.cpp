@@ -1,7 +1,7 @@
 #include "parser.hpp"
 
 void Parser::next() {
-    curr = std::move(lexer->nextToken());
+    curr = lexer->nextToken();
 }
 
 bool Parser::match(TokenType t) {
@@ -15,7 +15,7 @@ void Parser::expect(TokenType t) {
     next();
 }
 
-explicit Parser::Parser(std::unique_ptr<Lexer> lexer) : lexer(std::move(lexer)) {
+Parser::Parser(std::unique_ptr<Lexer> lexer) : lexer(std::move(lexer)) {
     next();
 }
 
@@ -68,7 +68,7 @@ std::unique_ptr<Ast> Parser::parseProgram() {
             procs.clear();
         } 
     }
-
+    return std::make_unique<Program>(name, std::move(varDecls));
 };
 
 std::vector<std::unique_ptr<Decl>> Parser::parseConstDecl() {
@@ -90,7 +90,7 @@ std::vector<std::unique_ptr<Decl>> Parser::parseConstDecl() {
         }
         next();
         expect(TokenType::tok_semicolon);
-        decls.push_back(std::make_unique<ConstDecl>(n, v));
+        decls.push_back(std::make_unique<ConstDecl>(n, std::move(v)));
     }
 
     return decls;
@@ -107,10 +107,18 @@ std::vector<std::unique_ptr<Decl>> Parser::parseTypeDecl() {
             next();
             if (match(TokenType::tok_record)) {
                 next();
-                std::vector<std::unique_ptr<Decl>> v = parseVarDecl();
+                std::vector<std::unique_ptr<TypeDecl>> v;
+                while(!match(TokenType::tok_end)) {
+                    std::string n = curr->value;
+                    expect(TokenType::tok_identifier);
+                    expect(TokenType::tok_colon);
+                    std::unique_ptr<TypeDecl> t = std::make_unique<TypeDecl>(n, curr->type);
+                    next();
+                    v.push_back(std::move(t));
+                }
                 expect(TokenType::tok_end);
                 expect(TokenType::tok_semicolon);
-                decls.push_back(std::make_unique<RecordType>(n, v));
+                decls.push_back(std::make_unique<RecordType>(n, std::move(v)));
             } else if (match(TokenType::tok_array)) {
                 next();
                 expect(TokenType::tok_open_bracket);
@@ -130,33 +138,33 @@ std::vector<std::unique_ptr<Decl>> Parser::parseTypeDecl() {
                 expect(TokenType::tok_semicolon);
             } else if (match(TokenType::tok_open_paren)) {
                 next();
-                std::vector<std::pair<std::unique_ptr<Decl>, int>> values;
+                std::vector<std::pair<std::unique_ptr<Expr>, int>> values;
                 int counter = 0;
                 while (!match(TokenType::tok_close_paren)) {
-                    std::unique_ptr<VarDecl> value = std::make_unique<VarDecl>(curr->value);
+                    std::unique_ptr<VarExpr> value = std::make_unique<VarExpr>(curr->value);
                     next();
                     int num = counter++;
                     values.push_back(std::make_pair(std::move(value), num));
                     expect(TokenType::tok_comma);
                 }
                 expect(TokenType::tok_close_paren);
-                decls.push_back(std::make_unique<EnumType>(n, values));
+                decls.push_back(std::make_unique<EnumType>(n, std::move(values)));
             } else if (match(TokenType::tok_number)) {
-                std::unique_ptr<NumberExpr> min = std::make_unique<NumberExpr>(std::stod(curr->value));
+                std::unique_ptr<Expr> min = std::make_unique<NumberExpr>(std::stod(curr->value));
                 next();
                 expect(TokenType::tok_range);
-                std::unique_ptr<NumberExpr> max = std::make_unique<NumberExpr>(std::stod(curr->value));
+                std::unique_ptr<Expr> max = std::make_unique<NumberExpr>(std::stod(curr->value));
                 next();
                 expect(TokenType::tok_semicolon);
-                decls.push_back(std::make_unique<RangeType>(n, curr->type, min, max));
+                decls.push_back(std::make_unique<RangeType>(n, curr->type, std::move(min), std::move(max)));
             } else if (match(TokenType::tok_char_literal)) {
-                std::unique_ptr<CharExpr> min = std::make_unique<CharExpr>((curr->value)[0]);
+                std::unique_ptr<Expr> min = std::make_unique<CharExpr>((curr->value)[0]);
                 next();
                 expect(TokenType::tok_range);
-                std::unique_ptr<CharExpr> max = std::make_unique<CharExpr>((curr->value)[0]);
+                std::unique_ptr<Expr> max = std::make_unique<CharExpr>((curr->value)[0]);
                 next();
                 expect(TokenType::tok_semicolon);
-                decls.push_back(std::make_unique<RangeType>(n, curr->type, min, max));
+                decls.push_back(std::make_unique<RangeType>(n, curr->type, std::move(min), std::move(max)));
             }
         } else {
             expect(TokenType::tok_colon);

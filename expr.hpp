@@ -66,6 +66,7 @@ struct UnaryExpr : public Expr {
     std::unique_ptr<Expr> rhs;
 
     UnaryExpr(std::string op, std::unique_ptr<Expr> rhs) : op(op), rhs(std::move(rhs)) {};
+    UnaryExpr(UnaryExpr&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -76,6 +77,7 @@ struct BinaryExpr : public Expr {
     std::unique_ptr<Expr> lhs, rhs;
 
     BinaryExpr(std::string op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs) : op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {};
+    BinaryExpr(BinaryExpr&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -86,6 +88,7 @@ struct CallExpr : public Expr {
     std::vector<std::unique_ptr<Expr>> args;
 
     CallExpr(const std::string &callee, std::vector<std::unique_ptr<Expr>> args) : callee(callee), args(std::move(args)) {};
+    CallExpr(CallExpr&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -96,6 +99,7 @@ struct ArrayExpr : public Expr {
     std::unique_ptr<Expr> index;
 
     ArrayExpr(std::unique_ptr<Expr> arr, std::unique_ptr<Expr> index) : arr(std::move(arr)), index(std::move(index)) {};
+    ArrayExpr(ArrayExpr&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -106,6 +110,7 @@ struct RecordExpr : public Expr {
     std::string field;
 
     RecordExpr(std::unique_ptr<Expr> record, const std::string &field) : record(std::move(record)), field(field) {};
+    RecordExpr(RecordExpr&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };

@@ -1,8 +1,8 @@
 CXX = g++
 CXXFLAGS = -arch arm64 -std=c++17 `llvm-config --cppflags --system-libs` -Wall -MMD -I/opt/X11/include
-LDFLAGS = `llvm-config --ldflags --libs core` -L/opt/X11/lib -lX11 -L/opt/homebrew/Cellar/llvm/20.1.2/lib -lLLVM-20
+LDFLAGS = `llvm-config --ldflags --libs core` -L/opt/X11/lib -lX11 -L/opt/homebrew/Cellar/llvm/20.1.2/lib
 EXEC = cpascal
-OBJECTS = token.o lexer.o main.o
+OBJECTS = token.o astVisitor.o expr.o stmt.o function.o parserDecl.o parserStmt.o lexer.o main.o
 DEPENDS = ${OBJECTS:.o=.d}
 
 ${EXEC}: ${OBJECTS}

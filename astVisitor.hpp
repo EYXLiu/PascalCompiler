@@ -1,42 +1,42 @@
 #ifndef CODEGENVISITOR_HPP
 #define CODEGENVISITOR_HPP
 
-class NumberExpr;
-class StringExpr;
-class CharExpr;
-class BoolExpr;
-class VarExpr;
-class UnaryExpr;
-class BinaryExpr;
-class CallExpr;
-class ArrayExpr;
-class RecordExpr;
+struct NumberExpr;
+struct StringExpr;
+struct CharExpr;
+struct BoolExpr;
+struct VarExpr;
+struct UnaryExpr;
+struct BinaryExpr;
+struct CallExpr;
+struct ArrayExpr;
+struct RecordExpr;
 
-class Prototype;
-class ExprStmt;
-class CallStmt;
-class AssignStmt;
-class CompoundStmt;
-class IfStmt;
-class WhileStmt;
-class RepeatStmt;
-class ForStmt;
-class CaseStmt;
-class ReadStmt;
-class WriteStmt;
+struct Prototype;
+struct ExprStmt;
+struct CallStmt;
+struct AssignStmt;
+struct CompoundStmt;
+struct IfStmt;
+struct WhileStmt;
+struct RepeatStmt;
+struct ForStmt;
+struct CaseStmt;
+struct ReadStmt;
+struct WriteStmt;
 
-class ConstDecl;
-class TypeDecl;
-class RangeType;
-class RecordType;
-class ArrayType;
-class EnumType;
-class VarDecl;
-class RecordVar;
-class ArrayVar;
-class FuncDecl;
-class ProcDecl;
-class Program;
+struct ConstDecl;
+struct TypeDecl;
+struct RangeType;
+struct RecordType;
+struct ArrayType;
+struct EnumType;
+struct VarDecl;
+struct RecordVar;
+struct ArrayVar;
+struct FuncDecl;
+struct ProcDecl;
+struct Program;
 
 class AstVisitor {
 public:

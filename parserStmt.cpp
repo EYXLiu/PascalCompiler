@@ -46,11 +46,11 @@ std::unique_ptr<Stmt> Parser::parseAssignStmt(const std::string &name) {
         next();
         std::unique_ptr<Expr> v = parseNestedExpr();
         expect(TokenType::tok_semicolon);
-        return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name), std::make_unique<UnaryExpr>(unary, v));
+        return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name), std::make_unique<UnaryExpr>(unary, std::move(v)));
     } else {
         std::unique_ptr<Expr> v = parseNestedExpr();
         expect(TokenType::tok_semicolon);
-        return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name), v);
+        return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name), std::move(v));
     }
     
 }
@@ -62,7 +62,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             std::string binary = curr->value;
             next();
             std::unique_ptr<Expr> RHS = parseNestedExpr();
-            return std::make_unique<BinaryExpr>(curr->value, LHS, RHS);
+            return std::make_unique<BinaryExpr>(curr->value, std::move(LHS), std::move(RHS));
         }
         return LHS;
     } else if (match(TokenType::tok_open_paren)) {
@@ -85,7 +85,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             std::string binary = curr->value;
             next();
             std::unique_ptr<Expr> RHS = parseNestedExpr();
-            return std::make_unique<BinaryExpr>(curr->value, LHS, RHS);
+            return std::make_unique<BinaryExpr>(curr->value, std::move(LHS), std::move(RHS));
         }
         return LHS;
     } else if (match(TokenType::tok_identifier)) {
@@ -97,7 +97,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
                 std::string binary = curr->value;
                 next();
                 std::unique_ptr<Expr> RHS = parseNestedExpr();
-                return std::make_unique<BinaryExpr>(curr->value, LHS, RHS);
+                return std::make_unique<BinaryExpr>(curr->value, std::move(LHS), std::move(RHS));
             }
             return LHS;
         } else {
@@ -106,10 +106,12 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
                 std::string binary = curr->value;
                 next();
                 std::unique_ptr<Expr> RHS = parseNestedExpr();
-                return std::make_unique<BinaryExpr>(curr->value, LHS, RHS);
+                return std::make_unique<BinaryExpr>(curr->value, std::move(LHS), std::move(RHS));
             }
             return LHS;
         }
+    } else {
+        throw new std::runtime_error("Invalid token: " + curr->value);
     }
 }
 
@@ -123,7 +125,7 @@ std::unique_ptr<Expr> Parser::parseCallExpr(const std::string &name) {
         if(match(TokenType::tok_comma)) { next(); };
     };
     expect(TokenType::tok_close_bracket);
-    return std::make_unique<CallExpr>(name, args);
+    return std::make_unique<CallExpr>(name, std::move(args));
 }
 
 std::unique_ptr<Stmt> Parser::parseCallStmt(const std::string &name) {
@@ -133,7 +135,7 @@ std::unique_ptr<Stmt> Parser::parseCallStmt(const std::string &name) {
         args.push_back(parseNestedExpr());
         if(match(TokenType::tok_comma)) { next(); };
     };
-    return std::make_unique<CallStmt>(name, args);
+    return std::make_unique<CallStmt>(name, std::move(args));
 }
 
 std::unique_ptr<Stmt> Parser::parseCompoundStmt() {
@@ -146,7 +148,7 @@ std::unique_ptr<Stmt> Parser::parseCompoundStmt() {
 
     expect(TokenType::tok_end);
     
-    return std::make_unique<CompoundStmt>(stmts);
+    return std::make_unique<CompoundStmt>(std::move(stmts));
 }
 
 std::unique_ptr<Stmt> Parser::parseIfStmt() {
@@ -170,10 +172,10 @@ std::unique_ptr<Stmt> Parser::parseIfStmt() {
             e = parseExprStmt();
         }
         expect(TokenType::tok_semicolon);
-        return std::make_unique<IfStmt>(cond, t, e);
+        return std::make_unique<IfStmt>(std::move(cond), std::move(t), std::move(e));
     }
     expect(TokenType::tok_semicolon);
-    return std::make_unique<IfStmt>(cond, t);
+    return std::make_unique<IfStmt>(std::move(cond), std::move(t));
 }
 
 std::unique_ptr<Stmt> Parser::parseWhileStmt() {
@@ -187,7 +189,7 @@ std::unique_ptr<Stmt> Parser::parseWhileStmt() {
         d = parseExprStmt();
     }
     expect(TokenType::tok_semicolon);
-    return std::make_unique<WhileStmt>(cond, d);
+    return std::make_unique<WhileStmt>(std::move(cond), std::move(d));
 }
 
 std::unique_ptr<Stmt> Parser::parseRepeatStmt() {
@@ -200,7 +202,7 @@ std::unique_ptr<Stmt> Parser::parseRepeatStmt() {
     expect(TokenType::tok_until);
     std::unique_ptr<Expr> cond = parseNestedExpr();
     expect(TokenType::tok_semicolon);
-    return std::make_unique<RepeatStmt>(cond, stmts);
+    return std::make_unique<RepeatStmt>(std::move(cond), std::move(stmts));
 }
 
 std::unique_ptr<Stmt> Parser::parseForStmt() {
@@ -241,7 +243,7 @@ std::unique_ptr<Stmt> Parser::parseForStmt() {
         b = parseExprStmt();
     }
     expect(TokenType::tok_semicolon);
-    return std::make_unique<ForStmt>(name, start, end, ischar, downto, b);
+    return std::make_unique<ForStmt>(name, start, end, ischar, downto, std::move(b));
 }
 
 std::unique_ptr<Stmt> Parser::parseCaseStmt() {
@@ -266,15 +268,16 @@ std::unique_ptr<Stmt> Parser::parseCaseStmt() {
         cases.push_back(std::pair(std::move(p), std::move(s)));
         expect(TokenType::tok_semicolon);
     }
-    std::unique_ptr<Stmt> s;
     if (match(TokenType::tok_else)) {
         next();
-        s = parseExprStmt();
+        std::unique_ptr<Stmt> s = parseExprStmt();
         expect(TokenType::tok_semicolon);
+        return std::make_unique<CaseStmt>(std::move(value), std::move(cases), std::move(s));
     }
     expect(TokenType::tok_end);
     expect(TokenType::tok_semicolon);
-    return std::make_unique<CaseStmt>(value, cases, s);
+
+    return std::make_unique<CaseStmt>(std::move(value), std::move(cases));
 }
 
 std::unique_ptr<Stmt> Parser::parseReadStmt() {
@@ -293,7 +296,7 @@ std::unique_ptr<Stmt> Parser::parseReadStmt() {
 
     expect(TokenType::tok_close_paren);
     expect(TokenType::tok_semicolon);
-    
+
     return std::make_unique<ReadStmt>(variables);
 }
 
@@ -304,7 +307,7 @@ std::unique_ptr<Stmt> Parser::parseWriteStmt() {
 
     while (!match(TokenType::tok_close_bracket)) {
         std::unique_ptr<Expr> e = parseNestedExpr();
-        exprs.push_back(e);
+        exprs.push_back(std::move(e));
         if (match(TokenType::tok_comma)) {
             next();
         }
@@ -313,5 +316,5 @@ std::unique_ptr<Stmt> Parser::parseWriteStmt() {
     expect(TokenType::tok_close_paren);
     expect(TokenType::tok_semicolon);
 
-    return std::make_unique<WriteStmt>(exprs);
+    return std::make_unique<WriteStmt>(std::move(exprs));
 }

@@ -1,5 +1,10 @@
 #include "lexer.hpp"
 #include "token.hpp"
+#include "stmt.hpp"
+#include "function.hpp"
+#include "expr.hpp"
+#include "parser.hpp"
+#include "astVisitor.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>

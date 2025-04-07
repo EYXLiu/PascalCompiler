@@ -28,6 +28,7 @@ struct ConstDecl : public Decl {
     std::unique_ptr<Expr> value;
 
     ConstDecl(const std::string &name, std::unique_ptr<Expr> value) : name(name), value(std::move(value)) {};
+    ConstDecl(ConstDecl&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -50,6 +51,7 @@ struct RangeType : public Decl {
     std::unique_ptr<Expr> max;
 
     RangeType(const std::string &name, TokenType type, std::unique_ptr<Expr> min, std::unique_ptr<Expr> max) : name(name), type(type), min(std::move(min)), max(std::move(max)) {};
+    RangeType(RangeType&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -57,9 +59,10 @@ struct RangeType : public Decl {
 
 struct RecordType : public Decl {
     std::string name;
-    std::vector<std::pair<std::string, std::unique_ptr<Decl>>> values;
+    std::vector<std::unique_ptr<TypeDecl>> values;
 
-    RecordType(const std::string &name, std::vector<std::pair<std::string, std::unique_ptr<Decl>>> values) : name(name), values(std::move(values)) {};
+    RecordType(const std::string &name, std::vector<std::unique_ptr<TypeDecl>> values) : name(name), values(std::move(values)) {};
+    RecordType(RecordType&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -73,6 +76,7 @@ struct ArrayType : public Decl {
     std::string identifier;
 
     ArrayType(const std::string &name, TokenType type, int min, int max, const std::string &identifier = "") : name(name), type(type), min(min), max(max), identifier(identifier) {};
+    ArrayType(ArrayType&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -80,9 +84,10 @@ struct ArrayType : public Decl {
 
 struct EnumType : public Decl {
     std::string name;
-    std::vector<std::pair<std::unique_ptr<Decl>, int>> values;
+    std::vector<std::pair<std::unique_ptr<Expr>, int>> values;
 
-    EnumType(const std::string &name, std::vector<std::pair<std::unique_ptr<Decl>, int>> values) : name(name), values(std::move(values)) {};
+    EnumType(const std::string &name, std::vector<std::pair<std::unique_ptr<Expr>, int>> values) : name(name), values(std::move(values)) {};
+    EnumType(EnumType&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -106,7 +111,7 @@ struct RecordVar : public Decl {
 
     RecordVar(std::vector<std::string> names, std::unique_ptr<RecordType> record, std::vector<std::pair<std::string, std::unique_ptr<Decl>>> values = {}) : names(std::move(names)), record(record.get()) {
         if (values.size() != 0) {
-            this->values = values;
+            this->values = std::move(values);
         } else {
             for (auto& a : values) {
                 this->values.push_back(std::make_pair(a.first, nullptr));
@@ -115,13 +120,14 @@ struct RecordVar : public Decl {
     };
     RecordVar(std::string name, RecordType* record, std::vector<std::pair<std::string, std::unique_ptr<Decl>>> values = {}) : names({name}), record(record) {
         if (values.size() != 0) {
-            this->values = values;
+            this->values = std::move(values);
         } else {
             for (auto& a : values) {
                 this->values.push_back(std::make_pair(a.first, nullptr));
             }
         }
     };
+    RecordVar(RecordVar&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -140,6 +146,7 @@ struct ArrayVar : public Decl {
             values.push_back(nullptr);
         }
     };
+    ArrayVar(ArrayVar&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -151,6 +158,7 @@ struct FuncDecl : public Decl {
     std::vector<std::unique_ptr<Stmt>> body;
 
     FuncDecl(std::unique_ptr<Prototype> proto, TokenType type, std::vector<std::unique_ptr<Stmt>> body) : proto(std::move(proto)), type(type), body(std::move(body)) {};
+    FuncDecl(FuncDecl&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -161,6 +169,7 @@ struct ProcDecl : public Decl {
     std::vector<std::unique_ptr<Stmt>> body;
 
     ProcDecl(std::unique_ptr<Prototype> proto, std::vector<std::unique_ptr<Stmt>> body) : proto(std::move(proto)), body(std::move(body)) {};
+    ProcDecl(ProcDecl&&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -171,6 +180,7 @@ struct Program : public Ast {
     std::vector<std::unique_ptr<Decl>> varDecls;
 
     Program(const std::string &name, std::vector<std::unique_ptr<Decl>> varDecls) : name(name), varDecls(std::move(varDecls)) {};
+    Program(Program&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
