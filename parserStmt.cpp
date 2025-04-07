@@ -291,6 +291,9 @@ std::unique_ptr<Stmt> Parser::parseReadStmt() {
         }
     }
 
+    expect(TokenType::tok_close_paren);
+    expect(TokenType::tok_semicolon);
+    
     return std::make_unique<ReadStmt>(variables);
 }
 
@@ -306,6 +309,9 @@ std::unique_ptr<Stmt> Parser::parseWriteStmt() {
             next();
         }
     }
+
+    expect(TokenType::tok_close_paren);
+    expect(TokenType::tok_semicolon);
 
     return std::make_unique<WriteStmt>(exprs);
 }
