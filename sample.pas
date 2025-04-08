@@ -81,6 +81,10 @@ begin
   // Display updated details after changes
   WriteLn('Person 1 Details (Updated):');
   PrintPersonDetails(person1);
+
+  ReadLn(name);
+
+  ReadLn(location);
   
   WriteLn('Person 2 Details (Updated):');
   PrintPersonDetails(person2);
