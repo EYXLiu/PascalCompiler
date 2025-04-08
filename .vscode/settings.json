@@ -54,6 +54,7 @@
         "map": "cpp",
         "__tree": "cpp",
         "iostream": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "__config": "cpp"
     }
 }

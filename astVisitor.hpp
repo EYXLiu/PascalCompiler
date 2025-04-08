@@ -1,5 +1,5 @@
-#ifndef CODEGENVISITOR_HPP
-#define CODEGENVISITOR_HPP
+#ifndef ASTVISITOR_HPP
+#define ASTVISITOR_HPP
 
 struct NumberExpr;
 struct StringExpr;

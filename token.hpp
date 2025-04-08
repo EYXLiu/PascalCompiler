@@ -64,7 +64,7 @@ enum TokenType {
     tok_colon = -54,
     tok_comma = -55,
     tok_dot = -56,
-    tok_open_paren = -57, 
+    tok_open_paren = -57,
     tok_close_paren = -58,
     tok_open_bracket = -59,
     tok_close_bracket = -60,

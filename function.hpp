@@ -9,16 +9,6 @@
 
 #include "astVisitor.hpp"
 
-struct Prototype : public Ast {
-    std::string name;
-    std::vector<std::unique_ptr<Decl>> args;
-
-    Prototype(const std::string &name, std::vector<std::unique_ptr<Decl>> args) : name(name), args(std::move(args)) {};
-    void accept(AstVisitor& visitor) override {
-        visitor.visit(*this);
-    };
-};
-
 struct Decl : public Ast {
     virtual ~Decl() = default;
 };
@@ -159,6 +149,16 @@ struct FuncDecl : public Decl {
 
     FuncDecl(std::unique_ptr<Prototype> proto, TokenType type, std::vector<std::unique_ptr<Stmt>> body) : proto(std::move(proto)), type(type), body(std::move(body)) {};
     FuncDecl(FuncDecl&&) noexcept = default;
+    void accept(AstVisitor& visitor) override {
+        visitor.visit(*this);
+    };
+};
+
+struct Prototype : public Ast {
+    std::string name;
+    std::vector<std::unique_ptr<Decl>> args;
+
+    Prototype(const std::string &name, std::vector<std::unique_ptr<Decl>> args) : name(name), args(std::move(args)) {};
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };

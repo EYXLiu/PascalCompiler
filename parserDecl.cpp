@@ -10,6 +10,8 @@ bool Parser::match(TokenType t) {
 
 void Parser::expect(TokenType t) {
     if (!match(t)) {
+        std::cout << "\"" << curr->value << "\"" << std::endl;
+        std::cout << std::to_string(curr->type) << std::endl;
         throw new std::runtime_error("Expected token: " + std::to_string(t));
     };
     next();
@@ -215,23 +217,22 @@ std::unique_ptr<Decl> Parser::parseFuncDecl() {
 
     std::string name = curr->value;
     expect(TokenType::tok_identifier);
-    expect(TokenType::tok_open_paren);
-    std::vector<std::unique_ptr<Decl>> decls;
-    while (!match(TokenType::tok_close_paren)) {
-        std::vector<std::string> ids;
-        while (!match(TokenType::tok_colon)) {
-            ids.push_back(curr->value);
-            expect(TokenType::tok_identifier);
-            if (match(TokenType::tok_comma)) {
-                next();
+    if (match(TokenType::tok_open_paren)) {
+        expect(TokenType::tok_open_paren);
+        while (!match(TokenType::tok_close_paren)) {
+            std::vector<std::string> ids;
+            while (!match(TokenType::tok_colon)) {
+                ids.push_back(curr->value);
+                expect(TokenType::tok_identifier);
+                if (match(TokenType::tok_comma)) {
+                    next();
+                }
             }
+            expect(TokenType::tok_colon);
+            decls.push_back(std::make_unique<VarDecl>(ids, curr->type));
         }
-        expect(TokenType::tok_colon);
-        for (auto& s : ids) {
-            decls.push_back(std::make_unique<VarDecl>(s, curr->type));
-        }
+        expect(TokenType::tok_close_paren);
     }
-    expect(TokenType::tok_close_paren);
     expect(TokenType::tok_colon);
     TokenType t = curr->type;
     next();
@@ -244,7 +245,12 @@ std::unique_ptr<Decl> Parser::parseFuncDecl() {
         vars.clear();
     }
     expect(TokenType::tok_begin);
-    std::vector<std::unique_ptr<Stmt>> stmts = parseStmts();
+    std::vector<std::unique_ptr<Stmt>> stmts;
+
+    while (!match(TokenType::tok_end)) {
+        stmts.push_back(parseExprStmt());
+    }
+
     expect(TokenType::tok_end);
     expect(TokenType::tok_semicolon);
     return (std::make_unique<FuncDecl>(std::make_unique<Prototype>(name, std::move(decls)), t, std::move(stmts)));
@@ -257,7 +263,6 @@ std::unique_ptr<Decl> Parser::parseProcDecl() {
     std::string name = curr->value;
     expect(TokenType::tok_identifier);
     expect(TokenType::tok_open_paren);
-    std::vector<std::unique_ptr<Decl>> decls;
     while (!match(TokenType::tok_close_paren)) {
         std::vector<std::string> ids;
         while (!match(TokenType::tok_colon)) {
@@ -268,9 +273,7 @@ std::unique_ptr<Decl> Parser::parseProcDecl() {
             }
         }
         expect(TokenType::tok_colon);
-        for (auto& s : ids) {
-            decls.push_back(std::make_unique<VarDecl>(s, curr->type));
-        }
+        decls.push_back(std::make_unique<VarDecl>(ids, curr->type));
     }
     expect(TokenType::tok_close_paren);
     expect(TokenType::tok_semicolon);
@@ -282,7 +285,12 @@ std::unique_ptr<Decl> Parser::parseProcDecl() {
         vars.clear();
     }
     expect(TokenType::tok_begin);
-    std::vector<std::unique_ptr<Stmt>> stmts = parseStmts();
+    std::vector<std::unique_ptr<Stmt>> stmts;
+
+    while (!match(TokenType::tok_end)) {
+        stmts.push_back(parseExprStmt());
+    }
+
     expect(TokenType::tok_end);
     expect(TokenType::tok_semicolon);
     return (std::make_unique<ProcDecl>(std::make_unique<Prototype>(name, std::move(decls)), std::move(stmts)));

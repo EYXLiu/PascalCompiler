@@ -25,17 +25,18 @@ int main() {
     std::stringstream buffer;
     buffer << file.rdbuf();
 
-    Lexer* l = new Lexer(buffer.str());
+    std::unique_ptr<Lexer> l = std::make_unique<Lexer>(buffer.str());
 
-    while (true) {
-        std::unique_ptr<Token> t = l->nextToken();
-        std::cout << t->value << std::endl;
-        if (t->type == TokenType::tok_eof) {
-            break;
-        }
+    Parser *p = new Parser(std::move(l));
+    try {
+        p->parse();
+    } catch (std::runtime_error* &e) {
+        std::cout << e->what() << std::endl;
+    } catch (std::invalid_argument &e) {
+        std::cout << e.what() << std::endl;
     }
 
-    delete l;
+    delete (p);
     file.close();
 
     return 0;

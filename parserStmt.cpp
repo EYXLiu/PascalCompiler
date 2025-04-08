@@ -1,12 +1,14 @@
 #include "parser.hpp"
 
 std::vector<std::unique_ptr<Stmt>> Parser::parseStmts() {
+    expect(TokenType::tok_begin);
     std::vector<std::unique_ptr<Stmt>> stmts;
 
     while (!match(TokenType::tok_end)) {
         stmts.push_back(parseExprStmt());
     }
     
+    expect(TokenType::tok_end);
     expect(TokenType::tok_dot);
     return stmts;
 }
@@ -46,13 +48,13 @@ std::unique_ptr<Stmt> Parser::parseExprStmt() {
     } else if (match(TokenType::tok_write)) {
         return parseWriteStmt();
     } else {
-        throw new std::runtime_error("Invalid token");
+        throw new std::runtime_error("Invalid token" + curr->value);
     }
 }
 
 std::unique_ptr<Stmt> Parser::parseAssignStmt(const std::string &name, TokenType t) {
     expect(TokenType::tok_assign);
-    if (!match(TokenType::tok_identifier)) {
+    if (match(TokenType::tok_identifier)) {
         std::string unary = curr->value;
         next();
         std::unique_ptr<Expr> v = parseNestedExpr();
@@ -63,7 +65,6 @@ std::unique_ptr<Stmt> Parser::parseAssignStmt(const std::string &name, TokenType
         expect(TokenType::tok_semicolon);
         return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name, t), std::move(v));
     }
-    
 }
 
 std::unique_ptr<Stmt> Parser::parseAssignStmt(std::unique_ptr<Expr> name) {
@@ -84,7 +85,8 @@ std::unique_ptr<Stmt> Parser::parseAssignStmt(std::unique_ptr<Expr> name) {
 std::unique_ptr<Expr> Parser::parseNestedExpr() {
     if (match(TokenType::tok_number)) {
         std::unique_ptr<Expr> LHS = std::make_unique<NumberExpr>(std::stod(curr->value));
-        if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
+        next();
+        if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_equals && curr->type <= TokenType::tok_greater_equal) || (curr->type >= TokenType::tok_mod && curr->type <= TokenType::tok_div)) {
             std::string binary = curr->value;
             next();
             std::unique_ptr<Expr> RHS = parseNestedExpr();
@@ -93,6 +95,10 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
         return LHS;
     } else if (match(TokenType::tok_open_paren)) {
         next();
+        if (match(TokenType::tok_close_paren)) {
+            next();
+            return nullptr;
+        }
         std::unique_ptr<Expr> v = parseNestedExpr();
         expect(TokenType::tok_close_bracket);
         return v;
@@ -107,7 +113,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
     } else if (match(TokenType::tok_boolean_literal)) {
         std::unique_ptr<BoolExpr> LHS = std::make_unique<BoolExpr>(curr->value == "true");
         next();
-        if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_greater_equal && curr->type <= TokenType::tok_equals)) {
+        if (curr->type >= TokenType::tok_and && curr->type <= TokenType::tok_or) {
             std::string binary = curr->value;
             next();
             std::unique_ptr<Expr> RHS = parseNestedExpr();
@@ -120,7 +126,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
         next();
         if (match(TokenType::tok_open_paren)) {
             std::unique_ptr<Expr> LHS = parseCallExpr(name, t);
-            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
+            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_equals && curr->type <= TokenType::tok_div)) {
                 std::string binary = curr->value;
                 next();
                 std::unique_ptr<Expr> RHS = parseNestedExpr();
@@ -132,7 +138,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             std::unique_ptr<Expr> i = parseNestedExpr();
             expect(TokenType::tok_close_bracket);
             std::unique_ptr<Expr> LHS = std::make_unique<ArrayExpr>(std::make_unique<VarExpr>(name, t), std::move(i));
-            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
+            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_equals && curr->type <= TokenType::tok_div)) {
                 std::string binary = curr->value;
                 next();
                 std::unique_ptr<Expr> RHS = parseNestedExpr();
@@ -144,7 +150,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             std::string f = curr->value;
             next();
             std::unique_ptr<Expr> LHS = std::make_unique<RecordExpr>(std::make_unique<VarExpr>(name, t), f);
-            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
+            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_equals && curr->type <= TokenType::tok_div)) {
                 std::string binary = curr->value;
                 next();
                 std::unique_ptr<Expr> RHS = parseNestedExpr();
@@ -153,7 +159,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             return LHS;
         } else {
             std::unique_ptr<Expr> LHS = std::make_unique<VarExpr>(name, t);
-            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_greater_equal && curr->type <= TokenType::tok_equals)) {
+            if (match(TokenType::tok_plus)) {
                 std::string binary = curr->value;
                 next();
                 std::unique_ptr<Expr> RHS = parseNestedExpr();
@@ -162,30 +168,31 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             return LHS;
         }
     } else {
-        throw new std::runtime_error("Invalid token: " + curr->value);
+        throw new std::runtime_error("Nested Invalid token: " + curr->value);
     }
 }
 
 
 
 std::unique_ptr<Expr> Parser::parseCallExpr(const std::string &name, TokenType t) {
-    expect(TokenType::tok_open_bracket);
+    expect(TokenType::tok_open_paren);
     std::vector<std::unique_ptr<Expr>> args;
-    while (!match(TokenType::tok_close_bracket)) {
+    while (!match(TokenType::tok_close_paren)) {
         args.push_back(parseNestedExpr());
         if(match(TokenType::tok_comma)) { next(); };
     };
-    expect(TokenType::tok_close_bracket);
+    expect(TokenType::tok_close_paren);
     return std::make_unique<CallExpr>(name, std::move(args));
 }
 
 std::unique_ptr<Stmt> Parser::parseCallStmt(const std::string &name, TokenType t) {
-    expect(TokenType::tok_open_bracket);
+    expect(TokenType::tok_open_paren);
     std::vector<std::unique_ptr<Expr>> args;
-    while (!match(TokenType::tok_close_bracket)) {
+    while (!match(TokenType::tok_close_paren)) {
         args.push_back(parseNestedExpr());
         if(match(TokenType::tok_comma)) { next(); };
     };
+    expect(TokenType::tok_close_paren);
     return std::make_unique<CallStmt>(name, std::move(args));
 }
 
@@ -336,7 +343,7 @@ std::unique_ptr<Stmt> Parser::parseReadStmt() {
     expect(TokenType::tok_open_paren);
     std::vector<std::string> variables;
 
-    while (!match(TokenType::tok_close_bracket)) {
+    while (!match(TokenType::tok_close_paren)) {
         std::string var = curr->value;
         expect(TokenType::tok_identifier);
         variables.push_back(var);
@@ -352,11 +359,11 @@ std::unique_ptr<Stmt> Parser::parseReadStmt() {
 }
 
 std::unique_ptr<Stmt> Parser::parseWriteStmt() {
-    expect(TokenType::tok_read);
+    expect(TokenType::tok_write);
     expect(TokenType::tok_open_paren);
     std::vector<std::unique_ptr<Expr>> exprs;
 
-    while (!match(TokenType::tok_close_bracket)) {
+    while (!match(TokenType::tok_close_paren)) {
         std::unique_ptr<Expr> e = parseNestedExpr();
         exprs.push_back(std::move(e));
         if (match(TokenType::tok_comma)) {
