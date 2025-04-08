@@ -14,21 +14,22 @@ std::vector<std::unique_ptr<Stmt>> Parser::parseStmts() {
 std::unique_ptr<Stmt> Parser::parseExprStmt() {
     if (match(TokenType::tok_identifier)) {
         std::string n = curr->value;
+        TokenType t = curr->type;
         next();
         if (match(TokenType::tok_open_bracket)) {
             next();
             std::unique_ptr<Expr> i = parseNestedExpr();
             expect(TokenType::tok_close_bracket);
-            return parseAssignStmt(std::make_unique<ArrayExpr>(std::make_unique<VarExpr>(n), std::move(i)));
+            return parseAssignStmt(std::make_unique<ArrayExpr>(std::make_unique<VarExpr>(n, t), std::move(i)));
         } else if (match(TokenType::tok_dot)) {
             next();
             std::string f = curr->value;
             expect(TokenType::tok_number);
-            return parseAssignStmt(std::make_unique<RecordExpr>(std::make_unique<VarExpr>(n), f));
+            return parseAssignStmt(std::make_unique<RecordExpr>(std::make_unique<VarExpr>(n, t), f));
         } else if (match(TokenType::tok_assign)) {
-            return parseAssignStmt(n);
+            return parseAssignStmt(n, t);
         } else {
-            return parseCallStmt(n);
+            return parseCallStmt(n, t);
         }
     } else if (match(TokenType::tok_if)) {
         return parseIfStmt();
@@ -49,18 +50,18 @@ std::unique_ptr<Stmt> Parser::parseExprStmt() {
     }
 }
 
-std::unique_ptr<Stmt> Parser::parseAssignStmt(const std::string &name) {
+std::unique_ptr<Stmt> Parser::parseAssignStmt(const std::string &name, TokenType t) {
     expect(TokenType::tok_assign);
     if (!match(TokenType::tok_identifier)) {
         std::string unary = curr->value;
         next();
         std::unique_ptr<Expr> v = parseNestedExpr();
         expect(TokenType::tok_semicolon);
-        return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name), std::make_unique<UnaryExpr>(unary, std::move(v)));
+        return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name, t), std::make_unique<UnaryExpr>(unary, std::move(v)));
     } else {
         std::unique_ptr<Expr> v = parseNestedExpr();
         expect(TokenType::tok_semicolon);
-        return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name), std::move(v));
+        return std::make_unique<AssignStmt>(std::make_unique<VarExpr>(name, t), std::move(v));
     }
     
 }
@@ -115,9 +116,10 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
         return LHS;
     } else if (match(TokenType::tok_identifier)) {
         std::string name = curr->value;
+        TokenType t = curr->type;
         next();
         if (match(TokenType::tok_open_paren)) {
-            std::unique_ptr<Expr> LHS = parseCallExpr(name);
+            std::unique_ptr<Expr> LHS = parseCallExpr(name, t);
             if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
                 std::string binary = curr->value;
                 next();
@@ -129,7 +131,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             next();
             std::unique_ptr<Expr> i = parseNestedExpr();
             expect(TokenType::tok_close_bracket);
-            std::unique_ptr<Expr> LHS = std::make_unique<ArrayExpr>(std::make_unique<VarExpr>(name), std::move(i));
+            std::unique_ptr<Expr> LHS = std::make_unique<ArrayExpr>(std::make_unique<VarExpr>(name, t), std::move(i));
             if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
                 std::string binary = curr->value;
                 next();
@@ -141,7 +143,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             next();
             std::string f = curr->value;
             next();
-            std::unique_ptr<Expr> LHS = std::make_unique<RecordExpr>(std::make_unique<VarExpr>(name), f);
+            std::unique_ptr<Expr> LHS = std::make_unique<RecordExpr>(std::make_unique<VarExpr>(name, t), f);
             if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_div && curr->type <= TokenType::tok_equals)) {
                 std::string binary = curr->value;
                 next();
@@ -150,7 +152,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             }
             return LHS;
         } else {
-            std::unique_ptr<VarExpr> LHS = std::make_unique<VarExpr>(name);
+            std::unique_ptr<Expr> LHS = std::make_unique<VarExpr>(name, t);
             if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_greater_equal && curr->type <= TokenType::tok_equals)) {
                 std::string binary = curr->value;
                 next();
@@ -166,7 +168,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
 
 
 
-std::unique_ptr<Expr> Parser::parseCallExpr(const std::string &name) {
+std::unique_ptr<Expr> Parser::parseCallExpr(const std::string &name, TokenType t) {
     expect(TokenType::tok_open_bracket);
     std::vector<std::unique_ptr<Expr>> args;
     while (!match(TokenType::tok_close_bracket)) {
@@ -177,7 +179,7 @@ std::unique_ptr<Expr> Parser::parseCallExpr(const std::string &name) {
     return std::make_unique<CallExpr>(name, std::move(args));
 }
 
-std::unique_ptr<Stmt> Parser::parseCallStmt(const std::string &name) {
+std::unique_ptr<Stmt> Parser::parseCallStmt(const std::string &name, TokenType t) {
     expect(TokenType::tok_open_bracket);
     std::vector<std::unique_ptr<Expr>> args;
     while (!match(TokenType::tok_close_bracket)) {
@@ -297,7 +299,7 @@ std::unique_ptr<Stmt> Parser::parseForStmt() {
 
 std::unique_ptr<Stmt> Parser::parseCaseStmt() {
     expect(TokenType::tok_case);
-    std::unique_ptr<VarExpr> value = std::make_unique<VarExpr>(curr->value);
+    std::unique_ptr<VarExpr> value = std::make_unique<VarExpr>(curr->value, curr->type);
     expect(TokenType::tok_identifier);
     expect(TokenType::tok_of);
     std::vector<std::pair<std::unique_ptr<Expr>, std::unique_ptr<Stmt>>> cases;

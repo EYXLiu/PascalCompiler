@@ -11,9 +11,9 @@
 
 struct Prototype : public Ast {
     std::string name;
-    std::vector<std::string> args;
+    std::vector<std::unique_ptr<Decl>> args;
 
-    Prototype(const std::string &name, std::vector<std::string> args) : name(name), args(std::move(args)) {};
+    Prototype(const std::string &name, std::vector<std::unique_ptr<Decl>> args) : name(name), args(std::move(args)) {};
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
@@ -177,9 +177,10 @@ struct ProcDecl : public Decl {
 
 struct Program : public Ast {
     std::string name;
-    std::vector<std::unique_ptr<Decl>> varDecls;
+    std::vector<std::unique_ptr<Decl>> decls;
+    std::vector<std::unique_ptr<Stmt>> body;
 
-    Program(const std::string &name, std::vector<std::unique_ptr<Decl>> varDecls) : name(name), varDecls(std::move(varDecls)) {};
+    Program(const std::string &name, std::vector<std::unique_ptr<Decl>> decls, std::vector<std::unique_ptr<Stmt>> body) : name(name), decls(std::move(decls)), body(std::move(body)) {};
     Program(Program&) noexcept = default;
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);

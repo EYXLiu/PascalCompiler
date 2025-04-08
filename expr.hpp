@@ -54,8 +54,9 @@ struct BoolExpr : public Expr {
 
 struct VarExpr : public Expr {
     std::string name;
+    TokenType t;
 
-    VarExpr(const std::string &name) : name(name) {};
+    VarExpr(const std::string &name, TokenType t) : name(name), t(t) {};
     void accept(AstVisitor& visitor) override {
         visitor.visit(*this);
     };
