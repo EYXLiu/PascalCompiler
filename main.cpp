@@ -1,10 +1,11 @@
 #include "lexer.hpp"
 #include "token.hpp"
 #include "stmt.hpp"
-#include "function.hpp"
+#include "decl.hpp"
 #include "expr.hpp"
 #include "parser.hpp"
 #include "astVisitor.hpp"
+#include "codegenVisitor.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -26,10 +27,12 @@ int main() {
     buffer << file.rdbuf();
 
     std::unique_ptr<Lexer> l = std::make_unique<Lexer>(buffer.str());
+    CodegenVisitor c = CodegenVisitor();
 
     Parser *p = new Parser(std::move(l));
     try {
-        p->parse();
+        std::unique_ptr<Program> program = p->parse();
+        program->accept(c);
     } catch (std::runtime_error* &e) {
         std::cout << e->what() << std::endl;
     } catch (std::invalid_argument &e) {

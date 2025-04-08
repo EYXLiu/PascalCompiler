@@ -4,7 +4,7 @@
 #include "lexer.hpp"
 #include "expr.hpp"
 #include "stmt.hpp"
-#include "function.hpp"
+#include "decl.hpp"
 #include "token.hpp"
 
 #include <string>
@@ -22,8 +22,8 @@ private:
     void expect(TokenType t);
 public:
     explicit Parser(std::unique_ptr<Lexer> lexer);
-    std::unique_ptr<Ast> parse();
-    std::unique_ptr<Ast> parseProgram();
+    std::unique_ptr<Program> parse();
+    std::unique_ptr<Program> parseProgram();
 
     std::vector<std::unique_ptr<Decl>> parseConstDecl();
     std::vector<std::unique_ptr<Decl>> parseTypeDecl();

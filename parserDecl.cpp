@@ -21,11 +21,11 @@ Parser::Parser(std::unique_ptr<Lexer> lexer) : lexer(std::move(lexer)) {
     next();
 }
 
-std::unique_ptr<Ast> Parser::parse() {
+std::unique_ptr<Program> Parser::parse() {
     return parseProgram();
 }
 
-std::unique_ptr<Ast> Parser::parseProgram() {
+std::unique_ptr<Program> Parser::parseProgram() {
     expect(TokenType::tok_program);
     std::string name = curr->value;
     next();

@@ -3,15 +3,16 @@
 
 #include "astVisitor.hpp"
 #include "expr.hpp"
-#include "function.hpp"
+#include "decl.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "stmt.hpp"
 #include "token.hpp"
 #include "llvm.hpp"
 
-class codegenVisitor {
+class CodegenVisitor : public AstVisitor {
 public:
+
     void visit(NumberExpr& ast);
     void visit(StringExpr& ast);
     void visit(CharExpr& ast);
