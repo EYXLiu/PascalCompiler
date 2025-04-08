@@ -5,7 +5,7 @@
 #include "expr.hpp"
 #include "parser.hpp"
 #include "astVisitor.hpp"
-#include "codegenVisitor.hpp"
+//#include "codegenVisitor.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -27,12 +27,12 @@ int main() {
     buffer << file.rdbuf();
 
     std::unique_ptr<Lexer> l = std::make_unique<Lexer>(buffer.str());
-    CodegenVisitor c = CodegenVisitor();
+    //CodegenVisitor c = CodegenVisitor();
 
     Parser *p = new Parser(std::move(l));
     try {
         std::unique_ptr<Program> program = p->parse();
-        program->accept(c);
+        //program->accept(c);
     } catch (std::runtime_error* &e) {
         std::cout << e->what() << std::endl;
     } catch (std::invalid_argument &e) {

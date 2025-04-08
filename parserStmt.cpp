@@ -22,11 +22,12 @@ std::unique_ptr<Stmt> Parser::parseExprStmt() {
             next();
             std::unique_ptr<Expr> i = parseNestedExpr();
             expect(TokenType::tok_close_bracket);
+            expect(TokenType::tok_semicolon);
             return parseAssignStmt(std::make_unique<ArrayExpr>(std::make_unique<VarExpr>(n, t), std::move(i)));
         } else if (match(TokenType::tok_dot)) {
             next();
             std::string f = curr->value;
-            expect(TokenType::tok_number);
+            expect(TokenType::tok_identifier);
             return parseAssignStmt(std::make_unique<RecordExpr>(std::make_unique<VarExpr>(n, t), f));
         } else if (match(TokenType::tok_assign)) {
             return parseAssignStmt(n, t);
@@ -48,13 +49,13 @@ std::unique_ptr<Stmt> Parser::parseExprStmt() {
     } else if (match(TokenType::tok_write)) {
         return parseWriteStmt();
     } else {
-        throw new std::runtime_error("Invalid token" + curr->value);
+        throw new std::runtime_error("Invalid token: " + curr->value);
     }
 }
 
 std::unique_ptr<Stmt> Parser::parseAssignStmt(const std::string &name, TokenType t) {
     expect(TokenType::tok_assign);
-    if (match(TokenType::tok_identifier)) {
+    if (!(curr->type >= TokenType::tok_boolean_literal && curr->type <= TokenType::tok_identifier)) {
         std::string unary = curr->value;
         next();
         std::unique_ptr<Expr> v = parseNestedExpr();
@@ -69,7 +70,7 @@ std::unique_ptr<Stmt> Parser::parseAssignStmt(const std::string &name, TokenType
 
 std::unique_ptr<Stmt> Parser::parseAssignStmt(std::unique_ptr<Expr> name) {
     expect(TokenType::tok_assign);
-    if (!match(TokenType::tok_identifier)) {
+    if (!(curr->type >= TokenType::tok_boolean_literal && curr->type <= TokenType::tok_identifier)) {
         std::string unary = curr->value;
         next();
         std::unique_ptr<Expr> v = parseNestedExpr();
@@ -159,7 +160,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             return LHS;
         } else {
             std::unique_ptr<Expr> LHS = std::make_unique<VarExpr>(name, t);
-            if (match(TokenType::tok_plus)) {
+            if ((curr->type >= TokenType::tok_divide && curr->type <= TokenType::tok_plus) || (curr->type >= TokenType::tok_equals && curr->type <= TokenType::tok_div)) {
                 std::string binary = curr->value;
                 next();
                 std::unique_ptr<Expr> RHS = parseNestedExpr();
@@ -168,7 +169,7 @@ std::unique_ptr<Expr> Parser::parseNestedExpr() {
             return LHS;
         }
     } else {
-        throw new std::runtime_error("Nested Invalid token: " + curr->value);
+        throw new std::runtime_error("Nested Invalid token: " + std::to_string(curr->type));
     }
 }
 
@@ -193,6 +194,7 @@ std::unique_ptr<Stmt> Parser::parseCallStmt(const std::string &name, TokenType t
         if(match(TokenType::tok_comma)) { next(); };
     };
     expect(TokenType::tok_close_paren);
+    expect(TokenType::tok_semicolon);
     return std::make_unique<CallStmt>(name, std::move(args));
 }
 
@@ -360,6 +362,11 @@ std::unique_ptr<Stmt> Parser::parseReadStmt() {
 
 std::unique_ptr<Stmt> Parser::parseWriteStmt() {
     expect(TokenType::tok_write);
+    if (match(TokenType::tok_semicolon)) {
+        expect(TokenType::tok_semicolon);
+        std::vector<std::unique_ptr<Expr>> exprs = {};
+        return std::make_unique<WriteStmt>(std::move(exprs));
+    }
     expect(TokenType::tok_open_paren);
     std::vector<std::unique_ptr<Expr>> exprs;
 
@@ -373,6 +380,5 @@ std::unique_ptr<Stmt> Parser::parseWriteStmt() {
 
     expect(TokenType::tok_close_paren);
     expect(TokenType::tok_semicolon);
-
     return std::make_unique<WriteStmt>(std::move(exprs));
 }
