@@ -5,7 +5,7 @@
 #include "expr.hpp"
 #include "parser.hpp"
 #include "astVisitor.hpp"
-//#include "codegenVisitor.hpp"
+#include "codegenVisitor.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -16,13 +16,12 @@
 
 std::unique_ptr<llvm::LLVMContext> TheContext = std::make_unique<llvm::LLVMContext>();
 std::unique_ptr<llvm::IRBuilder<>> Builder = std::make_unique<llvm::IRBuilder<>>(*TheContext);
-std::unique_ptr<llvm::Module> TheModule = std::make_unique<llvm::Module>("Module", *TheContext);
-std::map<std::string, llvm::Value *> NamedValues;
+std::unique_ptr<llvm::Module> TheModule = std::make_unique<llvm::Module>("main", *TheContext);
+std::map<std::string, llvm::AllocaInst*> NamedValues;
+std::map<std::string, std::unique_ptr<Prototype>> FunctionProtos;
 
-
-
-int main() {
-    std::ifstream file("sample.pas");
+int main(int argc, char* argv[]) {
+    std::ifstream file(argv[1]);
     std::stringstream buffer;
     buffer << file.rdbuf();
 

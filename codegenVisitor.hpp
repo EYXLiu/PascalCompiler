@@ -11,32 +11,36 @@
 #include "llvm.hpp"
 
 class CodegenVisitor : public AstVisitor {
+private:
+    llvm::Value* LogErrorV(const char *str);
+    llvm::Function* getFunction(std::string name);
+    llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Function* TheFunction, llvm::StringRef name);
+
 public:
+    llvm::Value* visit(NumberExpr& ast);
+    llvm::Value* visit(StringExpr& ast);
+    llvm::Value* visit(CharExpr& ast);
+    llvm::Value* visit(BoolExpr& ast);
+    llvm::Value* visit(VarExpr& ast);
+    llvm::Value* visit(UnaryExpr& ast);
+    llvm::Value* visit(BinaryExpr& ast);
+    llvm::Value* visit(CallExpr& ast);
+    llvm::Value* visit(ArrayExpr& ast);
+    llvm::Value* visit(RecordExpr& ast);
 
-    void visit(NumberExpr& ast);
-    void visit(StringExpr& ast);
-    void visit(CharExpr& ast);
-    void visit(BoolExpr& ast);
-    void visit(VarExpr& ast);
-    void visit(UnaryExpr& ast);
-    void visit(BinaryExpr& ast);
-    void visit(CallExpr& ast);
-    void visit(ArrayExpr& ast);
-    void visit(RecordExpr& ast);
+    llvm::Value* visit(ExprStmt& ast);
+    llvm::Value* visit(CallStmt& ast);
+    llvm::Value* visit(AssignStmt& ast);
+    llvm::Value* visit(CompoundStmt& ast);
+    llvm::Value* visit(IfStmt& ast);
+    llvm::Value* visit(WhileStmt& ast);
+    llvm::Value* visit(RepeatStmt& ast);
+    llvm::Value* visit(ForStmt& ast);
+    llvm::Value* visit(CaseStmt& ast);
+    llvm::Value* visit(ReadStmt& ast);
+    llvm::Value* visit(WriteStmt& ast);
 
-    void visit(Prototype& ast);
-    void visit(ExprStmt& ast);
-    void visit(CallStmt& ast);
-    void visit(AssignStmt& ast);
-    void visit(CompoundStmt& ast);
-    void visit(IfStmt& ast);
-    void visit(WhileStmt& ast);
-    void visit(RepeatStmt& ast);
-    void visit(ForStmt& ast);
-    void visit(CaseStmt& ast);
-    void visit(ReadStmt& ast);
-    void visit(WriteStmt& ast);
-
+    llvm::Function* visit(Prototype& ast);
     void visit(ConstDecl& ast);
     void visit(TypeDecl& ast);
     void visit(RangeType& ast);
@@ -46,8 +50,8 @@ public:
     void visit(VarDecl& ast);
     void visit(RecordVar& ast);
     void visit(ArrayVar& ast);
-    void visit(FuncDecl& ast);
-    void visit(ProcDecl& ast);
+    llvm::Function* visit(FuncDecl& ast);
+    llvm::Function* visit(ProcDecl& ast);
     void visit(Program& ast);
 };
 

@@ -1,6 +1,8 @@
 #ifndef ASTVISITOR_HPP
 #define ASTVISITOR_HPP
 
+#include "llvm.hpp"
+
 struct NumberExpr;
 struct StringExpr;
 struct CharExpr;
@@ -42,30 +44,30 @@ class AstVisitor {
 public:
     virtual ~AstVisitor() = default;
     
-    virtual void visit(NumberExpr& ast);
-    virtual void visit(StringExpr& ast);
-    virtual void visit(CharExpr& ast);
-    virtual void visit(BoolExpr& ast);
-    virtual void visit(VarExpr& ast);
-    virtual void visit(UnaryExpr& ast);
-    virtual void visit(BinaryExpr& ast);
-    virtual void visit(CallExpr& ast);
-    virtual void visit(ArrayExpr& ast);
-    virtual void visit(RecordExpr& ast);
+    virtual llvm::Value* visit(NumberExpr& ast);
+    virtual llvm::Value* visit(StringExpr& ast);
+    virtual llvm::Value* visit(CharExpr& ast);
+    virtual llvm::Value* visit(BoolExpr& ast);
+    virtual llvm::Value* visit(VarExpr& ast);
+    virtual llvm::Value* visit(UnaryExpr& ast);
+    virtual llvm::Value* visit(BinaryExpr& ast);
+    virtual llvm::Value* visit(CallExpr& ast);
+    virtual llvm::Value* visit(ArrayExpr& ast);
+    virtual llvm::Value* visit(RecordExpr& ast);
 
-    virtual void visit(Prototype& ast);
-    virtual void visit(ExprStmt& ast);
-    virtual void visit(CallStmt& ast);
-    virtual void visit(AssignStmt& ast);
-    virtual void visit(CompoundStmt& ast);
-    virtual void visit(IfStmt& ast);
-    virtual void visit(WhileStmt& ast);
-    virtual void visit(RepeatStmt& ast);
-    virtual void visit(ForStmt& ast);
-    virtual void visit(CaseStmt& ast);
-    virtual void visit(ReadStmt& ast);
-    virtual void visit(WriteStmt& ast);
+    virtual llvm::Value* visit(ExprStmt& ast);
+    virtual llvm::Value* visit(CallStmt& ast);
+    virtual llvm::Value* visit(AssignStmt& ast);
+    virtual llvm::Value* visit(CompoundStmt& ast);
+    virtual llvm::Value* visit(IfStmt& ast);
+    virtual llvm::Value* visit(WhileStmt& ast);
+    virtual llvm::Value* visit(RepeatStmt& ast);
+    virtual llvm::Value* visit(ForStmt& ast);
+    virtual llvm::Value* visit(CaseStmt& ast);
+    virtual llvm::Value* visit(ReadStmt& ast);
+    virtual llvm::Value* visit(WriteStmt& ast);
 
+    virtual llvm::Function* visit(Prototype& ast);
     virtual void visit(ConstDecl& ast);
     virtual void visit(TypeDecl& ast);
     virtual void visit(RangeType& ast);
@@ -75,8 +77,8 @@ public:
     virtual void visit(VarDecl& ast);
     virtual void visit(RecordVar& ast);
     virtual void visit(ArrayVar& ast);
-    virtual void visit(FuncDecl& ast);
-    virtual void visit(ProcDecl& ast);
+    virtual llvm::Function* visit(FuncDecl& ast);
+    virtual llvm::Function* visit(ProcDecl& ast);
     virtual void visit(Program& ast);
 };
 

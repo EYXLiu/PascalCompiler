@@ -204,14 +204,23 @@ std::vector<std::unique_ptr<Decl>> Parser::parseVarDecl() {
             expect(TokenType::tok_close_bracket);
             expect(TokenType::tok_of);
             if (match(TokenType::tok_identifier)) {
-                decls.push_back(std::make_unique<ArrayVar>(n, curr->type, min, max, curr->value));
+                for (std::string &name : n) {
+                    decls.push_back(std::make_unique<ArrayVar>(name, curr->type, min, max, curr->value));
+                }
             } else {
-                decls.push_back(std::make_unique<ArrayVar>(n, curr->type, min, max));
+                for (std::string &name : n) {
+                    decls.push_back(std::make_unique<ArrayVar>(name, curr->type, min, max, curr->value));
+                }
             }
-        } else if (match(TokenType::tok_identifier)) {
-            decls.push_back(std::make_unique<VarDecl>(n, curr->type, curr->value));
         } else {
-            decls.push_back(std::make_unique<VarDecl>(n, curr->type));
+            for (std::string &id : n) {
+                if (!match(TokenType::tok_identifier)) {
+                    decls.push_back(std::make_unique<VarDecl>(id, curr->type));
+                } else {
+                    decls.push_back(std::make_unique<VarDecl>(id, curr->type, curr->value));
+                }
+            }
+            n.clear();
         }
         next();
         expect(TokenType::tok_semicolon);
@@ -237,7 +246,10 @@ std::unique_ptr<Decl> Parser::parseFuncDecl() {
                 }
             }
             expect(TokenType::tok_colon);
-            decls.push_back(std::make_unique<VarDecl>(ids, curr->type));
+            for (std::string &id : ids) {
+                decls.push_back(std::make_unique<TypeDecl>(id, curr->type));
+            }
+            ids.clear();
             next();
             if (match(TokenType::tok_semicolon)) {
                 next();
@@ -286,7 +298,10 @@ std::unique_ptr<Decl> Parser::parseProcDecl() {
                 }
             }
             expect(TokenType::tok_colon);
-            decls.push_back(std::make_unique<VarDecl>(ids, curr->type));
+            for (std::string &id : ids) {
+                decls.push_back(std::make_unique<TypeDecl>(id, curr->type));
+            }
+            ids.clear();
             next();
             if (match(TokenType::tok_semicolon)) {
                 next();

@@ -8,9 +8,12 @@
 #include <llvm/Support/raw_ostream.h> 
 #include <map>
 
+struct Prototype;
+
 extern std::unique_ptr<llvm::LLVMContext> TheContext;
 extern std::unique_ptr<llvm::IRBuilder<>> Builder;
 extern std::unique_ptr<llvm::Module> TheModule;
-extern std::map<std::string, llvm::Value *> NamedValues;
+extern std::map<std::string, llvm::AllocaInst *> NamedValues;
+extern std::map<std::string, std::unique_ptr<Prototype>> FunctionProtos;
 
 #endif
