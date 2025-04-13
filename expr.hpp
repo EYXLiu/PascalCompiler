@@ -97,10 +97,10 @@ struct CallExpr : public Expr {
 };
 
 struct ArrayExpr : public Expr {
-    std::unique_ptr<Expr> arr;
+    std::unique_ptr<VarExpr> arr;
     std::unique_ptr<Expr> index;
 
-    ArrayExpr(std::unique_ptr<Expr> arr, std::unique_ptr<Expr> index) : arr(std::move(arr)), index(std::move(index)) {};
+    ArrayExpr(std::unique_ptr<VarExpr> arr, std::unique_ptr<Expr> index) : arr(std::move(arr)), index(std::move(index)) {};
     ArrayExpr(ArrayExpr&&) noexcept = default;
     llvm::Value* accept(AstVisitor& visitor) override {
         return visitor.visit(*this);
@@ -108,10 +108,11 @@ struct ArrayExpr : public Expr {
 };
 
 struct RecordExpr : public Expr {
-    std::unique_ptr<Expr> record;
+    std::unique_ptr<VarExpr> record;
     std::string field;
+    int fieldIndex;
 
-    RecordExpr(std::unique_ptr<Expr> record, const std::string &field) : record(std::move(record)), field(field) {};
+    RecordExpr(std::unique_ptr<VarExpr> record, const std::string &field, int fieldIndex) : record(std::move(record)), field(field), fieldIndex(fieldIndex) {};
     RecordExpr(RecordExpr&&) noexcept = default;
     llvm::Value* accept(AstVisitor& visitor) override {
         return visitor.visit(*this);

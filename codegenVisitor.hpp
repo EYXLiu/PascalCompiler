@@ -15,6 +15,7 @@ private:
     llvm::Value* LogErrorV(const char *str);
     llvm::Function* getFunction(std::string name);
     llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Function* TheFunction, llvm::StringRef name);
+    int getFieldIndex(const std::string& recordName, const std::string& fieldName);
 
 public:
     llvm::Value* visit(NumberExpr& ast);

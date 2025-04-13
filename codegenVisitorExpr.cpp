@@ -1,28 +1,5 @@
 #include "codegenVisitor.hpp"
 
-llvm::Value* CodegenVisitor::LogErrorV(const char *str) {
-    fprintf(stderr, "Error: %s\n", str);
-    return nullptr;
-};
-
-llvm::Function* CodegenVisitor::getFunction(std::string name) {
-    if (auto* F = TheModule->getFunction(name)) {
-        return F;
-    };
-
-    auto FI = FunctionProtos.find(name);
-    if (FI != FunctionProtos.end()) {
-        return FI->second->accept(*this);
-    }
-
-    return nullptr;
-};
-
-llvm::AllocaInst* CodegenVisitor::CreateEntryBlockAlloca(llvm::Function* TheFunction, llvm::StringRef name) {
-    llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
-    return TmpB.CreateAlloca(llvm::Type::getDoubleTy(*TheContext), nullptr, name);
-};
-
 llvm::Value* CodegenVisitor::visit(NumberExpr& ast) {
     return llvm::ConstantFP::get(*TheContext, llvm::APFloat(ast.value));
 };
@@ -166,9 +143,50 @@ llvm::Value* CodegenVisitor::visit(CallExpr& ast) {
 }
 
 llvm::Value* CodegenVisitor::visit(ArrayExpr& ast) {
+    llvm::AllocaInst* A = NamedValues[ast.arr->name];
+    if (!A) {
+        std::string m = "Uknown Array Name" + ast.arr->name;
+        return LogErrorV(m.c_str());
+    }
 
+    llvm::Value* I = ast.index->accept(*this);
+    if (!I) {
+        return nullptr;
+    }
+
+    I = Builder->CreateFPToSI(I, llvm::Type::getInt32Ty(*TheContext), "idx");
+
+    llvm::Value* P = Builder->CreateGEP(
+        A->getAllocatedType(),
+        A, 
+        { llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0), I },
+        "arrayelement"
+    );
+
+    return Builder->CreateLoad(llvm::Type::getDoubleTy(*TheContext), P, "arrayload");
 }
     
 llvm::Value* CodegenVisitor::visit(RecordExpr& ast) {
+    llvm::AllocaInst* A = NamedValues[ast.record->name];
+    if (!A) {
+        std::string m = "Uknown Record Name" + ast.record->name;
+        return LogErrorV(m.c_str());
+    }
 
+    int fieldIndex = getFieldIndex(ast.record->name, ast.field);
+    if (fieldIndex == -1) {
+        return LogErrorV("Unknown Record Field");
+    }
+
+    llvm::Value* P = Builder->CreateGEP(
+        A->getAllocatedType(),
+        A, 
+        {
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0),
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), fieldIndex)
+        },
+        "recordfield"
+    );
+
+    return Builder->CreateLoad(llvm::Type::getDoubleTy(*TheContext), P, "recordload");
 }

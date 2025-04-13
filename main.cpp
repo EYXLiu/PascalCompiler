@@ -18,7 +18,15 @@ std::unique_ptr<llvm::LLVMContext> TheContext = std::make_unique<llvm::LLVMConte
 std::unique_ptr<llvm::IRBuilder<>> Builder = std::make_unique<llvm::IRBuilder<>>(*TheContext);
 std::unique_ptr<llvm::Module> TheModule = std::make_unique<llvm::Module>("main", *TheContext);
 std::map<std::string, llvm::AllocaInst*> NamedValues;
+std::map<std::string, std::string> VariableTypeMap;
 std::map<std::string, std::unique_ptr<Prototype>> FunctionProtos;
+
+struct RecordInfo {
+    llvm::StructType* llvmType;
+    std::map<std::string, int> fieldIndices;
+};
+
+std::map<std::string, RecordInfo> RecordTypes;
 
 int main(int argc, char* argv[]) {
     std::ifstream file(argv[1]);
