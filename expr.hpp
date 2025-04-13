@@ -110,9 +110,8 @@ struct ArrayExpr : public Expr {
 struct RecordExpr : public Expr {
     std::unique_ptr<VarExpr> record;
     std::string field;
-    int fieldIndex;
 
-    RecordExpr(std::unique_ptr<VarExpr> record, const std::string &field, int fieldIndex) : record(std::move(record)), field(field), fieldIndex(fieldIndex) {};
+    RecordExpr(std::unique_ptr<VarExpr> record, const std::string &field) : record(std::move(record)), field(field) {};
     RecordExpr(RecordExpr&&) noexcept = default;
     llvm::Value* accept(AstVisitor& visitor) override {
         return visitor.visit(*this);
