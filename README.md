@@ -2,6 +2,7 @@
 Tech Stack: C++, LLVM, Object Oriented Programming Principles, Visitor Design Pattern
 
 # About
+* Since function definitions for Decl and Stmt are not avaliable, code will not compile (clang++: error: linker command failed with exit code 1 (use -v to see invocation)) - means that the functions are declared but never written
 * Lexer and Parser both for the Pascal Programming Language, allows for var, type, arrays, records (struct), functions, and procedures
 * Follows modern C++ best practices, including the use of std::unique_ptr for memory management and clean separation via .hpp/.cpp files
 * Global scope for LLVM infrastructure (Context, Builder, Module), as well as Values, Variables, Functions, and Records
